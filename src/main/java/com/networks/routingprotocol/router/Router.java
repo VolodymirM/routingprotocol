@@ -49,7 +49,12 @@ public class Router  implements MessageListener {
     public void onMessageReceived(Message message, ClientHandler handler) {
         System.out.println("Router received from client " + message.getId() + ": " + message.getContent());
 
-        //TODO: Send message to other client or router
+        //TODO: Send message to other (specific) client or router
+        for (ClientHandler clientHandler : clientHandlers) {
+            if (clientHandler != handler) {
+                clientHandler.sendMessageToClient(message);
+            }
+        }
     }
 
     public void start() {

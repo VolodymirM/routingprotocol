@@ -2,26 +2,32 @@ package com.networks.routingprotocol.router;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 import com.networks.routingprotocol.client.Message;
 
 public class ClientHandler implements Runnable {
     private final Socket clientSocket;
+    private ObjectOutputStream out;
+    private ObjectInputStream in;
     private final MessageListener listener;
-
+    
     public ClientHandler(Socket clientSocket, MessageListener listener) {
         this.clientSocket = clientSocket;
         this.listener = listener;
     }
-
+    
     @Override
     public void run() {
-        try (ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream())) {
+        try {
+            out = new ObjectOutputStream(clientSocket.getOutputStream());
+            out.flush();
+            in = new ObjectInputStream(clientSocket.getInputStream());
+            
             Object inputObj;
             while ((inputObj = in.readObject()) != null) {
                 if (inputObj instanceof Message message) {
-                    // Notify the Router
                     listener.onMessageReceived(message, this);
                 }
             }
@@ -33,6 +39,17 @@ public class ClientHandler implements Runnable {
             } catch (IOException e) {
                 System.err.println("Could not close socket: " + e.getMessage());
             }
+        }
+    }
+    
+    public void sendMessageToClient(Message message) {
+         try {
+            if (out != null) {
+                out.writeObject(message);
+                out.flush();
+            }
+        } catch (IOException e) {
+            System.err.println("Failed to send message to client: " + e.getMessage());
         }
     }
 }
