@@ -8,6 +8,9 @@ import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import com.networks.routingprotocol.client.Message;
 
@@ -32,7 +35,7 @@ public class Router implements MessageListener {
                 Socket socket = serverSocket.accept();
 
                 BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                String clientType = reader.readLine(); // Read handshake line (no newline included)
+                String clientType = reader.readLine();
 
                 if (clientType == null) {
                     socket.close();
@@ -59,7 +62,7 @@ public class Router implements MessageListener {
 
                     RouterHandler routerHandler = new RouterHandler(socket, this);
                     routerHandlers.add(routerHandler);
-                    RoutingTable.getInstance().addRoute(port, routerHandler.getRouterPort());
+                    System.out.println("Router " + socket.getLocalPort() + " connected on port " + routerHandler.getRouterPort());
                     new Thread(routerHandler).start();
                 } else {
                     System.out.println("Unknown connection type: " + clientType);
@@ -73,18 +76,21 @@ public class Router implements MessageListener {
 
     @Override
     public void onMessageReceived(Message message, ClientHandler handler) {
-        System.out.println("Router received message for client " + message.getId() + ": " + message.getContent());
+        System.out.println("Router: " + port);
 
         for (ClientHandler clientHandler : clientHandlers) {
             if (clientHandler.getClientSocket().getPort() == RoutingTable.getInstance().getClientPort(message.getId())) {
-                System.out.println("Router:" + port);
                 clientHandler.send(message);
                 return;
             }
         }
         
-        // TODO: Sending message to other routers to get to the client
-
+        int nextPort = getNextPortToClient(message.getId());
+        if (nextPort != -1) {
+            sendToRouter(nextPort, message);
+        } else {
+            System.out.println("No route found for client " + message.getId());
+        }
     }
 
     public void connect(int targetPort) {
@@ -97,6 +103,7 @@ public class Router implements MessageListener {
 
             RouterHandler routerHandler = new RouterHandler(routerSocket, this);
             routerHandlers.add(routerHandler);
+            RoutingTable.getInstance().addRoute(port, targetPort);
             new Thread(routerHandler).start();
             System.out.println("Router connected to another router on port " + targetPort);
         } catch (IOException e) {
@@ -104,11 +111,10 @@ public class Router implements MessageListener {
         }
     }
 
-    public void sendToRouter(int targetPort, Message message) {
+    private void sendToRouter(int targetPort, Message message) {
         for (RouterHandler handler : routerHandlers) {
             if (handler.getRouterPort() == targetPort) {
                 handler.send(message);
-                System.out.println("Message sent to router on port " + targetPort + ": " + message.getContent());
                 return;
             }
         }
@@ -118,11 +124,55 @@ public class Router implements MessageListener {
     public void start() {
         new Thread(this::startListening).start();
         try {
-            Thread.sleep(100); // Give listener thread a head start
+            Thread.sleep(100);
         } catch (InterruptedException e) {
             System.err.println("Error in router thread: " + e.getMessage());
         }
     }
+
+    public int getNextPortToClient(int clientId) {
+        Integer clientRouterPort = RoutingTable.getInstance().getClientConnection(clientId);
+        if (clientRouterPort == null) return -1;
+
+        if (clientRouterPort == port) {
+            return -1;
+        }
+
+        Set<Integer> visited = new HashSet<>();
+        List<Integer> queue = new ArrayList<>();
+        List<Integer> firstHops = new ArrayList<>();
+
+        visited.add(port);
+        List<Integer> neighbors = RoutingTable.getInstance().getRouterNeighbors(port);
+        for (Integer neighbor : neighbors) {
+            queue.add(neighbor);
+            firstHops.add(neighbor);
+        }
+
+        int idx = 0;
+        while (idx < queue.size()) {
+            int current = queue.get(idx);
+            int firstHop = firstHops.get(idx);
+            idx++;
+
+            if (current == clientRouterPort) {
+                return firstHop;
+            }
+
+            if (!visited.contains(current)) {
+                visited.add(current);
+                for (Integer neighbor : RoutingTable.getInstance().getRouterNeighbors(current)) {
+                    if (!visited.contains(neighbor)) {
+                        queue.add(neighbor);
+                        firstHops.add(firstHop);
+                    }
+                }
+            }
+        }
+
+        return -1;
+    }
+
 
     public int getPort() { return port; }
     public void setPort(int port) { this.port = port; }

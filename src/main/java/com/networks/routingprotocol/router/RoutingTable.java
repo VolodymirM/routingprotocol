@@ -10,6 +10,7 @@ public class RoutingTable {
     private static RoutingTable instance;
     private final Map<Integer, Integer> clientsPorts = new HashMap<>();
     private final Map<Integer, List<Integer>> routes = new HashMap<>();
+    private final Map<Integer, Integer> clientConnections = new HashMap<>();
 
     private RoutingTable() {}
 
@@ -34,5 +35,13 @@ public class RoutingTable {
 
     public synchronized List<Integer> getRouterNeighbors(int port) {
         return routes.getOrDefault(port, Collections.emptyList());
+    }
+
+    public synchronized void addClientConnection(int clientId, int port) {
+        clientConnections.put(clientId, port);
+    }
+
+    public synchronized Integer getClientConnection(int clientId) {
+        return clientConnections.get(clientId);
     }
 }

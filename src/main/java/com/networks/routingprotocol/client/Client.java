@@ -34,6 +34,7 @@ public class Client {
             this.in = new ObjectInputStream(socket.getInputStream());
 
             RoutingTable.getInstance().addClient(id, clientPort);
+            RoutingTable.getInstance().addClientConnection(id, port);
             System.out.println("Client " + id + " connected to router on port " + port);
             listeningForMessages();
         } catch (IOException e) {

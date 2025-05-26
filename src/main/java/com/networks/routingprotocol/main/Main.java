@@ -17,6 +17,9 @@ public class Main {
 
         Router router4 = new Router(7003);
         router4.start();
+
+        Router router5 = new Router(7004);
+        router5.start();
         
         System.out.println("");
 
@@ -30,17 +33,22 @@ public class Main {
         router3.connect(7003);
         router4.connect(7001);
         router4.connect(7002);
+        router1.connect(7004);
+        router5.connect(7000);
 
         System.out.println("");
 
         Client client1 = new Client(1, 7000);
         
         @SuppressWarnings("unused")
-        Client client2 = new Client(2, 7000);
+        Client client2 = new Client(2, 7002);
+
+        @SuppressWarnings("unused")
+        Client client3 = new Client(3, 7003);
 
         System.out.println("");
         
-        client1.sendMessage(new Message(2, "Hello from client 1"));
+        client1.sendMessage(new Message(3, "Hello from client 1 to client 3"));
     }
 }
 
