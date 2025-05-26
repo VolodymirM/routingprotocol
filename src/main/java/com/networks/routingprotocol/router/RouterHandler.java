@@ -7,9 +7,7 @@ public class RouterHandler extends ClientHandler {
     private int routerPort;
 
     public RouterHandler(Socket routerSocket, MessageListener listener) {
-        super();
-        this.clientSocket = routerSocket;
-        this.listener = listener;
+        super(routerSocket, listener);
         this.routerPort = routerSocket.getPort();
     }
 

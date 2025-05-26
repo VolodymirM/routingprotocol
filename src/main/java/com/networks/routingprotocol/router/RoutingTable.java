@@ -28,7 +28,7 @@ public class RoutingTable {
         clientsPorts.put(clientId, port);
     }
 
-    public synchronized Integer getClientsPort(int clientId) {
+    public synchronized Integer getClientPort(int clientId) {
         return clientsPorts.get(clientId);
     }
 

@@ -8,10 +8,16 @@ import java.net.Socket;
 import com.networks.routingprotocol.client.Message;
 
 public class ClientHandler implements Runnable {
-    protected Socket clientSocket = new Socket();
+    private int id;
+    protected final Socket clientSocket;
     protected ObjectInputStream in;
     protected ObjectOutputStream out;
-    protected MessageListener listener = null;
+    protected final MessageListener listener;
+
+    public ClientHandler(Socket clientSocket, MessageListener listener) {
+        this.clientSocket = clientSocket;
+        this.listener = listener;
+    }
     
     @Override
     public void run() {
@@ -48,20 +54,16 @@ public class ClientHandler implements Runnable {
             System.err.println("Failed to send message to client: " + e.getMessage());
         }
     }
-
+    
     public Socket getClientSocket() {
         return clientSocket;
     }
 
-    public void setClientSocket(Socket clientSocket) {
-        this.clientSocket = clientSocket;
+    public int getId() {
+        return id;
     }
 
-    public MessageListener getListener() {
-        return listener;
-    }
-
-    public void setListener(MessageListener listener) {
-        this.listener = listener;
+    public void setId(int id) {
+        this.id = id;
     }
 }

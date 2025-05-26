@@ -36,18 +36,11 @@ public class Main {
         Client client1 = new Client(1, 7000);
         
         @SuppressWarnings("unused")
-        Client client2 = new Client(2, 7001);
+        Client client2 = new Client(2, 7000);
 
         System.out.println("");
         
         client1.sendMessage(new Message(2, "Hello from client 1"));
-
-        System.out.println("");
-
-        router1.sendToRouter(7002, new Message(2, "Hello from router 1 to router 2"));
-        router3.sendToRouter(7003, new Message(3, "Hello from router 1 to router 3"));
-        router4.sendToRouter(7001, new Message(3, "Hello from router 1 to router 3"));
-        router2.sendToRouter(7000, new Message(3, "Hello from router 1 to router 3"));
     }
 }
 

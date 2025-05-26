@@ -12,6 +12,7 @@ import com.networks.routingprotocol.router.RoutingTable;
 public class Client {
     private int id;
     private int port;
+    private int clientPort;
     private Socket socket;
     private ObjectInputStream in;
     private ObjectOutputStream out;
@@ -22,6 +23,7 @@ public class Client {
 
         try {
             this.socket = new Socket("localhost", port);
+            this.clientPort = socket.getLocalPort();
 
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             writer.write("CLIENT\n");
@@ -31,7 +33,7 @@ public class Client {
             this.out.flush();
             this.in = new ObjectInputStream(socket.getInputStream());
 
-            RoutingTable.getInstance().addClient(id, port);
+            RoutingTable.getInstance().addClient(id, clientPort);
             System.out.println("Client " + id + " connected to router on port " + port);
             listeningForMessages();
         } catch (IOException e) {

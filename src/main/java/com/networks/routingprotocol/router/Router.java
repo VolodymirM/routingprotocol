@@ -46,9 +46,7 @@ public class Router implements MessageListener {
                         continue;
                     }
 
-                    ClientHandler clientHandler = new ClientHandler();
-                    clientHandler.setClientSocket(socket);
-                    clientHandler.setListener(this);
+                    ClientHandler clientHandler = new ClientHandler(socket, this);
                     clientHandlers.add(clientHandler);
                     new Thread(clientHandler).start();
 
@@ -61,6 +59,7 @@ public class Router implements MessageListener {
 
                     RouterHandler routerHandler = new RouterHandler(socket, this);
                     routerHandlers.add(routerHandler);
+                    RoutingTable.getInstance().addRoute(port, routerHandler.getRouterPort());
                     new Thread(routerHandler).start();
                 } else {
                     System.out.println("Unknown connection type: " + clientType);
@@ -75,23 +74,17 @@ public class Router implements MessageListener {
     @Override
     public void onMessageReceived(Message message, ClientHandler handler) {
         System.out.println("Router received message for client " + message.getId() + ": " + message.getContent());
-        
-        // TODO: Routing logic goes here.
-        // for (ClientHandler clientHandler : clientHandlers) {
-        //     if (clientHandler.getClientSocket().getPort() == message.getId()) {
-        //         clientHandler.send(message);
-        //         System.out.println("Message sent to client " + message.getId() + ": " + message.getContent());
-        //         return;
-        //     }
-        // }
 
-        // for (RouterHandler routerHandler : routerHandlers) {
-        //     if (routerHandler.getRouterPort() == message.getId()) {
-        //         routerHandler.send(message);
-        //         System.out.println("Message sent to router on port " + message.getId() + ": " + message.getContent());
-        //         return;
-        //     }
-        // }
+        for (ClientHandler clientHandler : clientHandlers) {
+            if (clientHandler.getClientSocket().getPort() == RoutingTable.getInstance().getClientPort(message.getId())) {
+                System.out.println("Router:" + port);
+                clientHandler.send(message);
+                return;
+            }
+        }
+        
+        // TODO: Sending message to other routers to get to the client
+
     }
 
     public void connect(int targetPort) {
