@@ -5,6 +5,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
+import com.networks.routingprotocol.router.RoutingTable;
+
 public class Client {
     private int id;
     private int port;
@@ -20,6 +22,7 @@ public class Client {
             this.socket = new Socket("localhost", port);
             this.in = new ObjectInputStream(socket.getInputStream());
             this.out = new ObjectOutputStream(socket.getOutputStream());
+            RoutingTable.getInstance().addClient(id, port);
             System.out.println("Client " + id + " connected to router on port " + port);
             listeningForMessages();
         } catch (IOException e) {

@@ -52,4 +52,8 @@ public class ClientHandler implements Runnable {
             System.err.println("Failed to send message to client: " + e.getMessage());
         }
     }
+
+    public Socket getClientSocket() {
+        return clientSocket;
+    }
 }

@@ -4,25 +4,26 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.networks.routingprotocol.client.Message;
 
 public class Router  implements MessageListener {
-    private int id;
     private int port;
     private ServerSocket serverSocket;
     private final ArrayList<ClientHandler> clientHandlers = new ArrayList<>();
+    private final Map<Integer, ClientHandler> routerConnections = new HashMap<>();
     private static final int MAX_CLIENTS = 10;
     
-    public Router(int id, int port) {
-        this.id = id;
+    public Router(int port) {
         this.port = port;
     }
     
     public void startListening() {
         try {
             this.serverSocket = new ServerSocket(port);
-            System.out.println("Router " + id + " is listening on port " + port);
+            System.out.println("Router is listening on port " + port);
 
             while (true) {
                 Socket clientSocket = serverSocket.accept();
@@ -57,6 +58,34 @@ public class Router  implements MessageListener {
         }
     }
 
+    public void connect(int port) {
+        try {
+            Socket routerSocket = new Socket("localhost", port);
+            System.out.println("Router connected to router at " + port);
+
+            ClientHandler routerHandler = new ClientHandler(routerSocket, this);
+            clientHandlers.add(routerHandler);
+            routerConnections.put(port, routerHandler);  // <== Add this line
+
+            new Thread(routerHandler).start();
+            RoutingTable.getInstance().addRoute(this.port, port);
+        } catch (IOException e) {
+            System.err.println("Error connecting to another router: " + e.getMessage());
+        }
+    }
+
+
+    public void sendToRouter(int port, Message message) {
+        ClientHandler handler = routerConnections.get(port);
+        if (handler == null) {
+            System.out.println("No connection found to router on port: " + port);
+            return;
+        }
+
+        handler.sendMessageToClient(message);
+    }
+
+
     public void start() {
         new Thread(this::startListening).start();
 
@@ -67,8 +96,6 @@ public class Router  implements MessageListener {
         }
     }
 
-    public int getId() {return id;}
-    public void setId(int id) {this.id = id;}
     public int getPort() {return port;}
     public void setPort(int port) {this.port = port;}
 }
