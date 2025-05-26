@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 import com.networks.routingprotocol.client.Message;
 
@@ -13,7 +11,7 @@ public class Router  implements MessageListener {
     private int port;
     private ServerSocket serverSocket;
     private final ArrayList<ClientHandler> clientHandlers = new ArrayList<>();
-    private final Map<Integer, ClientHandler> routerConnections = new HashMap<>();
+    private final ArrayList<RouterHandler> routerHandlers = new ArrayList<>();
     private static final int MAX_CLIENTS = 10;
     
     public Router(int port) {
@@ -27,6 +25,13 @@ public class Router  implements MessageListener {
 
             while (true) {
                 Socket clientSocket = serverSocket.accept();
+
+                for (RouterHandler routerHandler : routerHandlers)
+                    if (routerHandler.getRouterPort() == clientSocket.getPort())
+                        clientSocket.close();
+
+                if (clientSocket.isClosed()) continue;
+
                 System.out.println("Client connected: " + clientSocket.getInetAddress());
 
                 if (clientHandlers.size() >= MAX_CLIENTS) {
@@ -51,38 +56,34 @@ public class Router  implements MessageListener {
         System.out.println("Router received from client " + message.getId() + ": " + message.getContent());
 
         //TODO: Send message to other (specific) client or router
-        for (ClientHandler clientHandler : clientHandlers) {
-            if (clientHandler != handler) {
-                clientHandler.sendMessageToClient(message);
-            }
-        }
+        // for (ClientHandler clientHandler : clientHandlers) {
+        //     if (clientHandler != handler) {
+        //         clientHandler.send(message);
+        //     }
+        // }
     }
 
     public void connect(int port) {
         try {
             Socket routerSocket = new Socket("localhost", port);
-            System.out.println("Router connected to router at " + port);
-
-            ClientHandler routerHandler = new ClientHandler(routerSocket, this);
-            clientHandlers.add(routerHandler);
-            routerConnections.put(port, routerHandler);  // <== Add this line
-
+            RouterHandler routerHandler = new RouterHandler(routerSocket, this);
+            routerHandlers.add(routerHandler);
+            System.out.println("Router connected to another router on port " + port);
             new Thread(routerHandler).start();
-            RoutingTable.getInstance().addRoute(this.port, port);
         } catch (IOException e) {
-            System.err.println("Error connecting to another router: " + e.getMessage());
+            System.err.println("Error connecting to router: " + e.getMessage());
         }
     }
 
-
     public void sendToRouter(int port, Message message) {
-        ClientHandler handler = routerConnections.get(port);
-        if (handler == null) {
-            System.out.println("No connection found to router on port: " + port);
-            return;
+        for (RouterHandler routerHandler : routerHandlers) {
+            if (routerHandler.getRouterPort() == port) {
+                routerHandler.send(message);
+                System.out.println("Message sent to router on port " + port + ": " + message.getContent());
+                return;
+            }
         }
-
-        handler.sendMessageToClient(message);
+        System.out.println("No router found on port " + port);
     }
 
 
