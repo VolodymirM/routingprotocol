@@ -2,7 +2,7 @@ package com.networks.routingprotocol.client;
 
 import java.io.Serializable;
 
-public class Message implements Serializable{
+public class Message implements Serializable {
     private int id;
     private String message;
 
