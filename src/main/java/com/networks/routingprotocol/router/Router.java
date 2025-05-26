@@ -46,10 +46,11 @@ public class Router implements MessageListener {
                         continue;
                     }
 
-                    ClientHandler clientHandler = new ClientHandler(socket, this);
+                    ClientHandler clientHandler = new ClientHandler();
+                    clientHandler.setClientSocket(socket);
+                    clientHandler.setListener(this);
                     clientHandlers.add(clientHandler);
                     new Thread(clientHandler).start();
-                    System.out.println("Client handler added. Total clients: " + clientHandlers.size());
 
                 } else if (clientType.equals("ROUTER")) {
                     if (routerHandlers.size() >= MAX_HANDLERS) {
@@ -61,8 +62,6 @@ public class Router implements MessageListener {
                     RouterHandler routerHandler = new RouterHandler(socket, this);
                     routerHandlers.add(routerHandler);
                     new Thread(routerHandler).start();
-                    System.out.println("Router handler added. Total routers: " + routerHandlers.size());
-
                 } else {
                     System.out.println("Unknown connection type: " + clientType);
                     socket.close();

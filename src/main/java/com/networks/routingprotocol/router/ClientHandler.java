@@ -8,15 +8,10 @@ import java.net.Socket;
 import com.networks.routingprotocol.client.Message;
 
 public class ClientHandler implements Runnable {
-    protected final Socket clientSocket;
-    protected ObjectOutputStream out;
+    protected Socket clientSocket = new Socket();
     protected ObjectInputStream in;
-    protected final MessageListener listener;
-    
-    public ClientHandler(Socket clientSocket, MessageListener listener) {
-        this.clientSocket = clientSocket;
-        this.listener = listener;
-    }
+    protected ObjectOutputStream out;
+    protected MessageListener listener = null;
     
     @Override
     public void run() {
@@ -45,6 +40,7 @@ public class ClientHandler implements Runnable {
     public void send(Message message) {
          try {
             if (out != null) {
+                out.reset();
                 out.writeObject(message);
                 out.flush();
             }
@@ -55,5 +51,17 @@ public class ClientHandler implements Runnable {
 
     public Socket getClientSocket() {
         return clientSocket;
+    }
+
+    public void setClientSocket(Socket clientSocket) {
+        this.clientSocket = clientSocket;
+    }
+
+    public MessageListener getListener() {
+        return listener;
+    }
+
+    public void setListener(MessageListener listener) {
+        this.listener = listener;
     }
 }

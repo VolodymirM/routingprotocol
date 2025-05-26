@@ -28,6 +28,7 @@ public class Client {
             writer.flush();
 
             this.out = new ObjectOutputStream(socket.getOutputStream());
+            this.out.flush();
             this.in = new ObjectInputStream(socket.getInputStream());
 
             RoutingTable.getInstance().addClient(id, port);
